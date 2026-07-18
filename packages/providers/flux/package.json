@@ -1,0 +1,24 @@
+{
+  "name": "@image-sdk/flux",
+  "version": "0.1.0",
+  "description": "Black Forest Labs Flux adapter for image-sdk",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "test:live": "vitest run test/live.test.ts"
+  },
+  "dependencies": {
+    "@image-sdk/core": "workspace:*"
+  }
+}

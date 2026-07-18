@@ -1,0 +1,25 @@
+{
+  "name": "image-sdk",
+  "version": "0.1.0",
+  "description": "A lightweight TypeScript SDK for image generation",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@image-sdk/core": "workspace:*",
+    "@image-sdk/flux": "workspace:*",
+    "@image-sdk/mock": "workspace:*"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+.pnpm-store/
+.agents/
+.claude/
+dist/
+coverage/
+.env
+*.tsbuildinfo
