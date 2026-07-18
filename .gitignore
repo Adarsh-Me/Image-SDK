@@ -3,6 +3,10 @@ node_modules/
 .agents/
 .claude/
 dist/
+.tsup/
 coverage/
 .env
 *.tsbuildinfo
+*.tgz
+image-sdk-out.png
+*.local

@@ -12,7 +12,9 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup --config tsup.config.ts",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
@@ -26,7 +28,11 @@
     "@image-sdk/recraft": "workspace:*",
     "@image-sdk/ideogram": "workspace:*",
     "@image-sdk/replicate": "workspace:*",
-    "@image-sdk/fal": "workspace:*"
-    ,"@image-sdk/google": "workspace:*"
+    "@image-sdk/fal": "workspace:*",
+    "@image-sdk/google": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

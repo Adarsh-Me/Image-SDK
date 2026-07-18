@@ -12,7 +12,17 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
-  "scripts": { "build": "tsup --config tsup.config.ts" },
-  "dependencies": { "@image-sdk/core": "workspace:*" }
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts"
+  },
+  "dependencies": {
+    "@image-sdk/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }
