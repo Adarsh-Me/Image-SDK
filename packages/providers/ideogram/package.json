@@ -1,0 +1,19 @@
+{
+  "name": "@image-sdk/ideogram",
+  "version": "0.1.0",
+  "description": "Ideogram adapter for image-sdk",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@image-sdk/core": "workspace:*"
+  }
+}

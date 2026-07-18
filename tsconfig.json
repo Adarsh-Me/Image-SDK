@@ -14,6 +14,17 @@
       "@image-sdk/core": ["packages/core/src/index.ts"],
       "@image-sdk/flux": ["packages/providers/flux/src/index.ts"],
       "@image-sdk/mock": ["packages/providers/mock/src/index.ts"],
+      "@image-sdk/stability": ["packages/providers/stability/src/index.ts"],
+      "@image-sdk/openai": ["packages/providers/openai/src/index.ts"],
+      "@image-sdk/recraft": ["packages/providers/recraft/src/index.ts"],
+      "@image-sdk/ideogram": ["packages/providers/ideogram/src/index.ts"],
+      "@image-sdk/replicate": ["packages/providers/replicate/src/index.ts"],
+      "@image-sdk/fal": ["packages/providers/fal/src/index.ts"],
+      "@image-sdk/google": ["packages/providers/google/src/index.ts"],
+      "@image-sdk/production": ["packages/production/src/index.ts"],
+      "@image-sdk/storage-s3": ["packages/storage-s3/src/index.ts"],
+      "@image-sdk/react": ["packages/react/src/index.ts"],
+      "@image-sdk/mcp": ["packages/mcp/src/index.ts"],
       "image-sdk": ["packages/sdk/src/index.ts"]
     }
   },

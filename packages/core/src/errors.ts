@@ -33,6 +33,27 @@ export class ProviderError extends ImageSdkError {
   }
 }
 
+export class UnsupportedCapabilityError extends ImageSdkError {
+  readonly provider: string;
+  readonly capability: string;
+
+  constructor(provider: string, capability: string, details?: unknown) {
+    super(`${provider} does not support the requested ${capability}.`, "UNSUPPORTED_CAPABILITY", details);
+    this.provider = provider;
+    this.capability = capability;
+  }
+}
+
+export class ModerationError extends ProviderError {
+  readonly moderation: import("./types").ModerationResult;
+
+  constructor(provider: string, message: string, moderation: import("./types").ModerationResult, status?: number, details?: unknown) {
+    super(provider, message, status, details);
+    this.name = "ModerationError";
+    this.moderation = moderation;
+  }
+}
+
 export class ImageGenerationTimeoutError extends ImageSdkError {
   readonly provider: string;
 
@@ -49,5 +70,27 @@ export class ImageGenerationTimeoutError extends ImageSdkError {
 export class CancellationError extends ImageSdkError {
   constructor(message = "Image generation was cancelled.") {
     super(message, "GENERATION_CANCELLED");
+  }
+}
+
+export class GenerationExhaustedError extends ImageSdkError {
+  readonly failures: readonly unknown[];
+
+  constructor(failures: readonly unknown[]) {
+    super("All configured image providers failed to generate the requested image.", "GENERATION_EXHAUSTED", { failures });
+    this.failures = failures;
+  }
+}
+
+export class BudgetExceededError extends ImageSdkError {
+  readonly provider: string;
+
+  constructor(provider: string, cost: import("./types").ImageCost, limit: import("./types").ImageCost) {
+    super(
+      `Image generation with ${provider} is estimated to cost ${cost.amount} ${cost.currency}, which exceeds the maxCostPerCall limit of ${limit.amount} ${limit.currency}.`,
+      "BUDGET_EXCEEDED",
+      { provider, cost, limit }
+    );
+    this.provider = provider;
   }
 }

@@ -19,5 +19,8 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "image-sdk": "workspace:*"
   }
 }
