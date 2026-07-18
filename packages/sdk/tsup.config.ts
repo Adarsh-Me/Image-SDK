@@ -7,6 +7,7 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   splitting: false,
+  noExternal: [/@image-sdk\//],
   outExtension({ format }) {
     return { js: format === "esm" ? ".mjs" : ".js" };
   }

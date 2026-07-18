@@ -21,11 +21,45 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@22.20.1)
 
-  packages/cli: {}
+  packages/cli:
+    dependencies:
+      image-sdk:
+        specifier: workspace:*
+        version: link:../sdk
 
   packages/core: {}
 
+  packages/mcp:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/production:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/providers/fal:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
   packages/providers/flux:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/providers/google:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/providers/ideogram:
     dependencies:
       '@image-sdk/core':
         specifier: workspace:*
@@ -37,17 +71,73 @@ importers:
         specifier: workspace:*
         version: link:../../core
 
+  packages/providers/openai:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/providers/recraft:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/providers/replicate:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/providers/stability:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../../core
+
+  packages/react:
+    dependencies:
+      '@image-sdk/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: '>=18'
+        version: 19.2.7
+
   packages/sdk:
     dependencies:
       '@image-sdk/core':
         specifier: workspace:*
         version: link:../core
+      '@image-sdk/fal':
+        specifier: workspace:*
+        version: link:../providers/fal
       '@image-sdk/flux':
         specifier: workspace:*
         version: link:../providers/flux
+      '@image-sdk/google':
+        specifier: workspace:*
+        version: link:../providers/google
+      '@image-sdk/ideogram':
+        specifier: workspace:*
+        version: link:../providers/ideogram
       '@image-sdk/mock':
         specifier: workspace:*
         version: link:../providers/mock
+      '@image-sdk/openai':
+        specifier: workspace:*
+        version: link:../providers/openai
+      '@image-sdk/recraft':
+        specifier: workspace:*
+        version: link:../providers/recraft
+      '@image-sdk/replicate':
+        specifier: workspace:*
+        version: link:../providers/replicate
+      '@image-sdk/stability':
+        specifier: workspace:*
+        version: link:../providers/stability
+
+  packages/storage-s3: {}
 
 packages:
 
@@ -735,6 +825,10 @@ packages:
     resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
     engines: {node: ^10 || ^12 || >=14}
 
+  react@19.2.7:
+    resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
+    engines: {node: '>=0.10.0'}
+
   readdirp@4.1.2:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
@@ -1399,6 +1493,8 @@ snapshots:
       nanoid: 3.3.16
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  react@19.2.7: {}
 
   readdirp@4.1.2: {}
 

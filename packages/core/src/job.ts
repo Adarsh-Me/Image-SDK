@@ -1,11 +1,13 @@
 import { CancellationError, ProviderError } from "./errors";
-import type { AdapterJobHandle, ImageResult, JobEvent, JobEventData, JobStatus } from "./types";
+import type { AdapterJobHandle, ImageGenerationStrategy, ImageResult, JobEvent, JobEventData, JobMetadata, JobStatus } from "./types";
 
 type Listener = (data: unknown) => void;
 
 export class Job {
   readonly id: string;
   readonly provider: string;
+  readonly metadata?: JobMetadata;
+  readonly strategy: ImageGenerationStrategy;
   status: JobStatus;
   progress?: number;
 
@@ -14,10 +16,12 @@ export class Job {
   private resultPromise?: Promise<ImageResult>;
   private cancelled = false;
 
-  constructor(handle: AdapterJobHandle) {
+  constructor(handle: AdapterJobHandle, strategy: ImageGenerationStrategy = "managed") {
     this.handle = handle;
     this.id = handle.id;
     this.provider = handle.provider;
+    this.metadata = handle.metadata;
+    this.strategy = strategy;
     this.status = handle.status ?? "queued";
 
     handle.onProgress?.((progress) => {
@@ -85,6 +89,22 @@ export class Job {
     this.cancelled = true;
     this.status = "failed";
     this.emit("error", new CancellationError());
+  }
+
+  toJSON(): {
+    id: string;
+    provider: string;
+    status: JobStatus;
+    strategy: ImageGenerationStrategy;
+    metadata?: JobMetadata;
+  } {
+    return {
+      id: this.id,
+      provider: this.provider,
+      status: this.status,
+      strategy: this.strategy,
+      ...(this.metadata === undefined ? {} : { metadata: this.metadata })
+    };
   }
 
   private emit<TEvent extends JobEvent>(event: TEvent, payload: JobEventData[TEvent]): void {

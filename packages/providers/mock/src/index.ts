@@ -1,14 +1,36 @@
-import type { Adapter, AdapterJobHandle, ImageResult, NormalizedRequest } from "@image-sdk/core";
+import { normalizeModeration, type Adapter, type AdapterCapabilities, type AdapterJobHandle, type ImageResult, type NormalizedRequest } from "@image-sdk/core";
 
 export interface MockAdapterOptions {
   model?: string;
 }
+
+export const MOCK_CAPABILITIES: AdapterCapabilities = {
+  aspectRatios: ["1:1", "16:9", "9:16", "4:3"],
+  maxImagesPerCall: 1,
+  referenceImages: { supported: false },
+  inpainting: false,
+  negativePrompt: false,
+  seed: true,
+  qualities: [],
+  outputFormats: ["svg"],
+  async: false,
+  webhooks: false,
+  livePreview: false
+};
+
+const MOCK_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  "1:1": { width: 1024, height: 1024 },
+  "16:9": { width: 1344, height: 768 },
+  "9:16": { width: 768, height: 1344 },
+  "4:3": { width: 1152, height: 864 }
+};
 
 export function mock(options: MockAdapterOptions = {}): Adapter {
   const model = options.model ?? "mock-image-v1";
 
   return {
     provider: "mock",
+    capabilities: MOCK_CAPABILITIES,
 
     async generate(request: NormalizedRequest): Promise<AdapterJobHandle> {
       const result = createMockResult(request, model);
@@ -32,15 +54,16 @@ function createMockResult(request: NormalizedRequest, model: string): ImageResul
   const hash = stableHash(`${request.prompt}:${request.aspectRatio ?? "1:1"}`);
   const color = `#${hash.slice(0, 6)}`;
   const escapedPrompt = escapeXml(request.prompt);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="${color}"/><text x="64" y="512" fill="#ffffff" font-family="sans-serif" font-size="42">${escapedPrompt}</text></svg>`;
+  const dimensions = MOCK_DIMENSIONS[request.aspectRatio ?? "1:1"] ?? MOCK_DIMENSIONS["1:1"];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${dimensions.width}" height="${dimensions.height}" viewBox="0 0 ${dimensions.width} ${dimensions.height}"><rect width="${dimensions.width}" height="${dimensions.height}" fill="${color}"/><text x="64" y="${Math.floor(dimensions.height / 2)}" fill="#ffffff" font-family="sans-serif" font-size="42">${escapedPrompt}</text></svg>`;
   const buffer = new TextEncoder().encode(svg);
 
   return {
     url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
     buffer,
     mimeType: "image/svg+xml",
-    width: 1024,
-    height: 1024,
+    width: dimensions.width,
+    height: dimensions.height,
     provider: "mock",
     model,
     cost: {
@@ -49,10 +72,7 @@ function createMockResult(request: NormalizedRequest, model: string): ImageResul
       estimated: true
     },
     ...(request.seed === undefined ? {} : { seed: request.seed }),
-    moderation: {
-      flagged: false,
-      provider: "mock"
-    }
+    moderation: normalizeModeration("mock")
   };
 }
 

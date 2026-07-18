@@ -1,0 +1,23 @@
+{
+  "name": "@image-sdk/production",
+  "version": "0.1.0",
+  "description": "Optional production orchestration for image-sdk",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@image-sdk/core": "workspace:*"
+  }
+}

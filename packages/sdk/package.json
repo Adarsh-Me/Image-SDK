@@ -20,6 +20,13 @@
   "dependencies": {
     "@image-sdk/core": "workspace:*",
     "@image-sdk/flux": "workspace:*",
-    "@image-sdk/mock": "workspace:*"
+    "@image-sdk/mock": "workspace:*",
+    "@image-sdk/stability": "workspace:*",
+    "@image-sdk/openai": "workspace:*",
+    "@image-sdk/recraft": "workspace:*",
+    "@image-sdk/ideogram": "workspace:*",
+    "@image-sdk/replicate": "workspace:*",
+    "@image-sdk/fal": "workspace:*"
+    ,"@image-sdk/google": "workspace:*"
   }
 }

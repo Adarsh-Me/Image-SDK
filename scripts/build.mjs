@@ -8,6 +8,17 @@ const packageDirectories = [
   "packages/core",
   "packages/providers/flux",
   "packages/providers/mock",
+  "packages/providers/stability",
+  "packages/providers/openai",
+  "packages/providers/recraft",
+  "packages/providers/ideogram",
+  "packages/providers/replicate",
+  "packages/providers/fal",
+  "packages/providers/google",
+  "packages/storage-s3",
+  "packages/production",
+  "packages/react",
+  "packages/mcp",
   "packages/sdk",
   "packages/cli"
 ];
