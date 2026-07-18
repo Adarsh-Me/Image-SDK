@@ -9,6 +9,7 @@ export {
   type ResumeJobOptions
 } from "./client";
 export {
+  BudgetExceededError,
   CancellationError,
   ConfigurationError,
   GenerationExhaustedError,

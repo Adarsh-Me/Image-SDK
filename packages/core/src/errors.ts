@@ -81,3 +81,16 @@ export class GenerationExhaustedError extends ImageSdkError {
     this.failures = failures;
   }
 }
+
+export class BudgetExceededError extends ImageSdkError {
+  readonly provider: string;
+
+  constructor(provider: string, cost: import("./types").ImageCost, limit: import("./types").ImageCost) {
+    super(
+      `Image generation with ${provider} is estimated to cost ${cost.amount} ${cost.currency}, which exceeds the maxCostPerCall limit of ${limit.amount} ${limit.currency}.`,
+      "BUDGET_EXCEEDED",
+      { provider, cost, limit }
+    );
+    this.provider = provider;
+  }
+}

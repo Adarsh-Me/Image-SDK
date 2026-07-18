@@ -15,8 +15,10 @@ export * from "./budget";
 export * from "./cache";
 
 export interface ImageStorage {
-  put(request: { key: string; body: Uint8Array; contentType: string; cacheControl?: string }): Promise<{ url: string; expiresAt?: string }>;
+  put(request: { key: string; body: ImageStorageBody; contentType: string; cacheControl?: string }): Promise<{ url: string; expiresAt?: string }>;
 }
+
+export type ImageStorageBody = Uint8Array | ReadableStream<Uint8Array> | Blob;
 
 export interface ProductionFeatures {
   cache?: {
@@ -217,28 +219,40 @@ async function persistImage(
   cacheKey: string,
   config: NonNullable<ProductionFeatures["storage"]>
 ): Promise<ImageResult> {
-  const body = result.buffer ?? (await downloadImage(result.url, config.fetch ?? fetch));
+  const upload = await resolveStorageBody(result, config.fetch ?? fetch);
   const extension = extensionFor(result.mimeType);
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "/");
   const prefix = config.prefix?.replace(/^\/+|\/+$/g, "");
   const key = [prefix, date, `${cacheKey}.${extension}`].filter(Boolean).join("/");
-  const stored = await config.storage.put({ key, body, contentType: result.mimeType });
+  const stored = await config.storage.put({ key, body: upload.body, contentType: upload.contentType ?? result.mimeType });
   return { ...result, url: stored.url, ...(stored.expiresAt ? { expiresAt: stored.expiresAt } : { expiresAt: undefined }) };
 }
 
-async function downloadImage(url: string, request: typeof fetch): Promise<Uint8Array> {
+async function resolveStorageBody(result: ImageResult, request: typeof fetch): Promise<{ body: ImageStorageBody; contentType?: string }> {
+  if (result.buffer) {
+    return { body: result.buffer, contentType: result.mimeType };
+  }
+
+  return downloadImage(result.url, request);
+}
+
+async function downloadImage(url: string, request: typeof fetch): Promise<{ body: ImageStorageBody; contentType?: string }> {
   if (url.startsWith("data:")) {
     const match = /^data:[^;,]+;base64,([\s\S]+)$/.exec(url);
     if (!match) {
       throw new TypeError("Only base64 data URLs can be persisted.");
     }
-    return Uint8Array.from(atob(match[1]!), (character) => character.charCodeAt(0));
+    return { body: Uint8Array.from(atob(match[1]!), (character) => character.charCodeAt(0)) };
   }
   const response = await request(url);
   if (!response.ok) {
     throw new Error(`Unable to download provider image for durable storage (HTTP ${response.status}).`);
   }
-  return new Uint8Array(await response.arrayBuffer());
+  const contentType = response.headers.get("content-type") ?? undefined;
+  if (response.body) {
+    return { body: response.body as ReadableStream<Uint8Array>, contentType };
+  }
+  return { body: new Uint8Array(await response.arrayBuffer()), contentType };
 }
 
 function extensionFor(mimeType: string): string {

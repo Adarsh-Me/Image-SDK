@@ -37,6 +37,25 @@ describe("S3-compatible image storage", () => {
     });
   });
 
+  it("passes streaming bodies to the transport without buffering them", async () => {
+    const calls: ObjectStoragePutRequest[] = [];
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]));
+        controller.close();
+      }
+    });
+    const storage = s3Storage({
+      bucket: "images",
+      publicUrl: "https://cdn.example.com",
+      client: { putObject: async (request) => void calls.push(request) }
+    });
+
+    await storage.put({ key: "stream.png", body, contentType: "image/png" });
+
+    expect(calls[0]?.body).toBe(body);
+  });
+
   it("rejects traversal keys before transport", async () => {
     const storage = s3Storage({
       bucket: "images",

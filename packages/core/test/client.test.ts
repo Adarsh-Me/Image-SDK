@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  BudgetExceededError,
   ConfigurationError,
   InvalidRequestError,
   ProviderError,
@@ -112,6 +113,38 @@ describe("createImageClient", () => {
 
     await expect((await client.generate({ prompt: "fallback image" })).result()).resolves.toMatchObject({ provider: "second" });
     expect(secondGenerate).toHaveBeenCalledOnce();
+  });
+
+  it("revalidates maxCostPerCall before a fallback provider is called", async () => {
+    const firstGenerate = vi.fn().mockResolvedValue({
+      id: "first",
+      provider: "first",
+      result: vi.fn().mockRejectedValue(new ProviderError("first", "bad request", 400))
+    });
+    const secondGenerate = vi.fn().mockResolvedValue({ id: "second", provider: "second", result: vi.fn().mockResolvedValue({ ...fixture, provider: "second" }) });
+    const client = createImageClient({
+      adapters: [
+        {
+          provider: "first",
+          capabilities: testCapabilities,
+          estimateCost: () => ({ amount: 0.01, currency: "USD", estimated: true }),
+          generate: firstGenerate
+        },
+        {
+          provider: "second",
+          capabilities: testCapabilities,
+          estimateCost: () => ({ amount: 0.2, currency: "USD", estimated: true }),
+          generate: secondGenerate
+        }
+      ],
+      fallback: true
+    });
+
+    await expect(
+      (await client.generate({ prompt: "fallback budget", maxCostPerCall: { amount: 0.05, currency: "USD", estimated: true } })).result()
+    ).rejects.toBeInstanceOf(BudgetExceededError);
+    expect(firstGenerate).toHaveBeenCalledOnce();
+    expect(secondGenerate).not.toHaveBeenCalled();
   });
 
   it("explains missing provider configuration", async () => {

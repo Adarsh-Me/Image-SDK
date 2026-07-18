@@ -85,6 +85,41 @@ describe("production wrapper", () => {
     await expect(budget.summary("team")).resolves.toMatchObject({ spent: 0.2, reserved: 0 });
   });
 
+  it("streams provider URL downloads into durable storage when no result buffer exists", async () => {
+    let uploadedBody: unknown;
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]));
+        controller.close();
+      }
+    });
+    const streamedClient = clientStub({ count: 0 });
+    streamedClient.generate = async () => ({
+      id: "job-stream",
+      provider: "mock",
+      status: "queued",
+      strategy: "managed",
+      result: async () => ({ ...result, buffer: undefined }),
+      cancel: async () => undefined,
+      toJSON: () => ({ id: "job-stream", provider: "mock", status: "complete", strategy: "managed" })
+    } as Job);
+    const images = withProductionFeatures(streamedClient, {
+      storage: {
+        fetch: async () => new Response(stream, { headers: { "content-type": "image/png" } }),
+        storage: {
+          put: async ({ body }) => {
+            uploadedBody = body;
+            return { url: "https://cdn.example/image.png" };
+          }
+        }
+      }
+    });
+
+    await expect((await images.generate({ prompt: "cat" })).result()).resolves.toMatchObject({ url: "https://cdn.example/image.png" });
+    expect(uploadedBody).toBe(stream);
+    expect(uploadedBody).not.toBeInstanceOf(Uint8Array);
+  });
+
   it("enforces concurrent reservations against a configured budget", async () => {
     const budget = memoryBudgetStore();
     const limit = { scope: "team", amount: 1, currency: "USD" };

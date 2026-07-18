@@ -1,7 +1,9 @@
+export type ImageStorageBody = Uint8Array | ReadableStream<Uint8Array> | Blob;
+
 export interface ObjectStoragePutRequest {
   bucket: string;
   key: string;
-  body: Uint8Array;
+  body: ImageStorageBody;
   contentType: string;
   cacheControl?: string;
 }
@@ -16,7 +18,7 @@ export interface ObjectStorageClient {
 
 export interface ImageStoragePutRequest {
   key: string;
-  body: Uint8Array;
+  body: ImageStorageBody;
   contentType: string;
   cacheControl?: string;
 }
@@ -68,7 +70,7 @@ function createStorage(options: S3CompatibleStorageOptions): ImageStorage {
   return {
     async put(request): Promise<StoredImage> {
       const key = joinKey(prefix, request.key);
-      if (request.body.byteLength === 0) {
+      if (isEmptyBody(request.body)) {
         throw new TypeError("Storage cannot upload an empty image body.");
       }
 
@@ -83,6 +85,16 @@ function createStorage(options: S3CompatibleStorageOptions): ImageStorage {
       return { url: publicUrl ? `${publicUrl}/${key}` : `${endpoint}/${bucket}/${key}` };
     }
   };
+}
+
+function isEmptyBody(body: ImageStorageBody): boolean {
+  if (body instanceof Uint8Array) {
+    return body.byteLength === 0;
+  }
+  if (typeof Blob !== "undefined" && body instanceof Blob) {
+    return body.size === 0;
+  }
+  return false;
 }
 
 function nonEmpty(value: string, name: string): string {

@@ -1,4 +1,4 @@
-import { CancellationError, ConfigurationError, GenerationExhaustedError, InvalidRequestError, UnsupportedCapabilityError } from "./errors";
+import { BudgetExceededError, CancellationError, ConfigurationError, GenerationExhaustedError, InvalidRequestError, UnsupportedCapabilityError } from "./errors";
 import { Job } from "./job";
 import { normalizeImageInput } from "./media";
 import { snapResolution } from "./resolution";
@@ -9,6 +9,7 @@ import type {
   AdapterJobHandle,
   AdapterCapabilities,
   ImageGenerationInput,
+  ImageCost,
   ImageResult,
   JobMetadata,
   NormalizedRequest,
@@ -19,6 +20,8 @@ export interface CreateImageClientOptions {
   adapters?: readonly Adapter[];
   retry?: RetryPolicy;
   fallback?: boolean | readonly string[];
+  maxCostPerCall?: ImageCost;
+  estimateCost?: (adapter: Adapter, request: NormalizedRequest) => ImageCost | undefined;
   usage?: InMemoryUsageTracker;
   now?: () => number;
 }
@@ -225,7 +228,8 @@ export function createImageClient(options: CreateImageClientOptions = {}): Image
 
   async function tryGenerate(adapter: Adapter, request: NormalizedRequest, retryCount: number, failures: unknown[]): Promise<AdapterJobHandle | undefined> {
     try {
-      const { retry: _retry, fallback: _fallback, provider: _provider, ...adapterRequest } = request;
+      assertWithinPerCallBudget(adapter, request);
+      const { retry: _retry, fallback: _fallback, provider: _provider, maxCostPerCall: _maxCostPerCall, ...adapterRequest } = request;
       const handle = await adapter.generate(adapterRequest);
       if (retryCount > 0) handle.metadata = { ...(handle.metadata ?? {}), retryCount };
       return handle;
@@ -235,6 +239,30 @@ export function createImageClient(options: CreateImageClientOptions = {}): Image
       const disposition = classifyGenerationFailure(error).disposition;
       if (disposition === "fail") throw error;
       return undefined;
+    }
+  }
+
+  function assertWithinPerCallBudget(adapter: Adapter, request: NormalizedRequest): void {
+    const limit = request.maxCostPerCall ?? options.maxCostPerCall;
+    if (!limit) {
+      return;
+    }
+
+    const normalizedLimit = normalizeCost(limit, "maxCostPerCall");
+    const estimate = options.estimateCost?.(adapter, request) ?? adapter.estimateCost?.(request);
+    if (!estimate) {
+      throw new ConfigurationError(`${adapter.provider} cannot be used with maxCostPerCall because it does not expose a cost estimate.`);
+    }
+
+    const normalizedEstimate = normalizeCost(estimate, `${adapter.provider} estimated cost`);
+    if (normalizedEstimate.currency !== normalizedLimit.currency) {
+      throw new ConfigurationError(
+        `${adapter.provider} estimated cost currency (${normalizedEstimate.currency}) does not match maxCostPerCall currency (${normalizedLimit.currency}).`
+      );
+    }
+
+    if (normalizedEstimate.amount > normalizedLimit.amount) {
+      throw new BudgetExceededError(adapter.provider, normalizedEstimate, normalizedLimit);
     }
   }
 }
@@ -380,12 +408,30 @@ function normalizeRequest(request: ImageGenerationInput): NormalizedRequest {
     ...(request.provider === undefined ? {} : { provider: request.provider })
     ,...(request.retry === undefined ? {} : { retry: request.retry })
     ,...(request.fallback === undefined ? {} : { fallback: request.fallback })
+    ,...(request.maxCostPerCall === undefined ? {} : { maxCostPerCall: normalizeCost(request.maxCostPerCall, "maxCostPerCall") })
     ,...(request.webhookUrl === undefined ? {} : { webhookUrl: request.webhookUrl })
     ,...(image === undefined ? {} : { image })
     ,...(mask === undefined ? {} : { mask })
     ,...(request.strength === undefined ? {} : { strength: request.strength })
     ,...(request.resolution === undefined ? {} : { resolution: request.resolution })
   };
+}
+
+function normalizeCost(cost: ImageCost, name: string): ImageCost {
+  if (!Number.isFinite(cost.amount) || cost.amount < 0) {
+    throw new InvalidRequestError(`${name}.amount must be a non-negative finite number.`);
+  }
+
+  const currency = cost.currency.trim().toUpperCase();
+  if (!currency) {
+    throw new InvalidRequestError(`${name}.currency must be a non-empty string.`);
+  }
+
+  if (typeof cost.estimated !== "boolean") {
+    throw new InvalidRequestError(`${name}.estimated must be a boolean.`);
+  }
+
+  return { amount: cost.amount, currency, estimated: cost.estimated };
 }
 
 async function normalizeWebhookInput(request: Request | unknown): Promise<WebhookInput> {

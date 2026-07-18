@@ -13,6 +13,7 @@ export interface NormalizedRequest {
   provider?: string;
   retry?: import("./retry").RetryPolicy;
   fallback?: boolean | readonly string[];
+  maxCostPerCall?: ImageCost;
   aspectRatio?: string;
   quality?: ImageQuality;
   seed?: number;
@@ -115,6 +116,7 @@ export interface WebhookInput {
 export interface Adapter<TOptions = unknown> {
   readonly provider: string;
   readonly capabilities: AdapterCapabilities;
+  estimateCost?(request: NormalizedRequest): ImageCost | undefined;
   generate(request: NormalizedRequest, options?: TOptions): Promise<AdapterJobHandle>;
   resume?(id: string, metadata?: JobMetadata): Promise<AdapterJobHandle>;
   parseWebhook?(input: WebhookInput, metadata?: JobMetadata): Promise<ImageResult> | ImageResult;
@@ -139,6 +141,7 @@ export interface ImageGenerationInput extends SimpleImageOptions {
   strength?: number;
   retry?: import("./retry").RetryPolicy;
   fallback?: boolean | readonly string[];
+  maxCostPerCall?: ImageCost;
 }
 
 export interface ImageEditOptions extends SimpleImageOptions {

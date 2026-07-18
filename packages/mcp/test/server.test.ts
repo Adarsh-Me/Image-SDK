@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 import { Job, type AdapterCapabilities, type AdapterJobHandle, type ImageClient, type ImageGenerationInput, type ImageResult } from "@image-sdk/core";
 import { describe, expect, it } from "vitest";
-import { ImageMcpServer, runStdioServer, type BudgetAwareImageClient } from "../src/index";
+import { getImageMcpToolDefinitions, ImageMcpServer, runStdioServer, type BudgetAwareImageClient } from "../src/index";
 
 const result: ImageResult = {
   url: "https://example.test/image.png",
@@ -14,7 +14,7 @@ const result: ImageResult = {
   moderation: { flagged: false, provider: "test" }
 };
 
-function createClient(): BudgetAwareImageClient {
+function createClient(generated: ImageGenerationInput[] = []): BudgetAwareImageClient {
   const handle: AdapterJobHandle = { id: "job-1", provider: "test", result: async () => result };
   const capabilities: AdapterCapabilities = {
     aspectRatios: ["1:1"],
@@ -37,7 +37,10 @@ function createClient(): BudgetAwareImageClient {
   }
 
   return {
-    generate: async (_input: ImageGenerationInput) => new Job(handle),
+    generate: async (input: ImageGenerationInput) => {
+      generated.push(input);
+      return new Job(handle);
+    },
     job: async () => new Job(handle),
     parseWebhook: async () => result,
     capabilities: getCapabilities,
@@ -47,11 +50,65 @@ function createClient(): BudgetAwareImageClient {
 
 describe("ImageMcpServer", () => {
   it("generates an image through the injected client", async () => {
-    const server = new ImageMcpServer({ client: createClient() });
-    const response = await server.handle({ id: 1, method: "generate", params: { prompt: "a mountain", seed: 7 } });
+    const generated: ImageGenerationInput[] = [];
+    const server = new ImageMcpServer({ client: createClient(generated) });
+    const response = await server.handle({
+      id: 1,
+      method: "generate",
+      params: {
+        prompt: "a mountain",
+        provider: "test",
+        fallback: ["test"],
+        maxCostPerCall: { amount: 1, currency: "usd", estimated: true },
+        aspectRatio: "1:1",
+        quality: "standard",
+        seed: 7,
+        mode: "text-to-image",
+        strategy: "managed",
+        webhookUrl: "https://example.test/hook",
+        strength: undefined,
+        resolution: { width: 1024, height: 1024 },
+        retry: { retries: 1, backoff: "exponential", initialDelayMs: 1, maxDelayMs: 2 }
+      }
+    });
 
     expect(response.error).toBeUndefined();
     expect(response.result).toMatchObject({ job: { id: "job-1", provider: "test" }, image: result });
+    expect(generated[0]).toMatchObject({
+      prompt: "a mountain",
+      provider: "test",
+      fallback: ["test"],
+      maxCostPerCall: { amount: 1, currency: "USD", estimated: true },
+      aspectRatio: "1:1",
+      quality: "standard",
+      seed: 7,
+      mode: "text-to-image",
+      strategy: "managed",
+      webhookUrl: "https://example.test/hook",
+      resolution: { width: 1024, height: 1024 },
+      retry: { retries: 1, backoff: "exponential", initialDelayMs: 1, maxDelayMs: 2 }
+    });
+  });
+
+  it("exposes strict tool schemas", async () => {
+    const server = new ImageMcpServer({ client: createClient() });
+    const response = await server.handle({ id: "tools", method: "listTools" });
+    const tools = response.result as ReturnType<typeof getImageMcpToolDefinitions>;
+    const generate = tools.find((tool) => tool.name === "generate");
+
+    expect(response.id).toBe("tools");
+    expect(generate).toMatchObject({
+      inputSchema: {
+        additionalProperties: false,
+        required: ["prompt"],
+        properties: {
+          maxCostPerCall: { additionalProperties: false },
+          resolution: { additionalProperties: false },
+          retry: { additionalProperties: false }
+        }
+      }
+    });
+    expect(getImageMcpToolDefinitions()[0]?.inputSchema).toMatchObject({ additionalProperties: false });
   });
 
   it("returns capabilities and delegates budget checks", async () => {
@@ -72,6 +129,14 @@ describe("ImageMcpServer", () => {
     await expect(server.handle({ id: 2, method: "generate", params: {} })).resolves.toEqual({
       id: 2,
       error: { code: "INVALID_REQUEST", message: "generate requires params.prompt as a string." }
+    });
+    await expect(server.handle({ id: 20, method: "generate", params: { prompt: "cat", providerSpecific: true } })).resolves.toEqual({
+      id: 20,
+      error: { code: "INVALID_REQUEST", message: "generate params.providerSpecific is not a supported parameter." }
+    });
+    await expect(server.handle({ id: 21, method: "generate", params: { prompt: "cat", resolution: { width: 0, height: 1024 } } })).resolves.toEqual({
+      id: 21,
+      error: { code: "INVALID_REQUEST", message: "generate params.resolution width and height must be positive integers." }
     });
 
     const withoutBudget = createClient();
