@@ -1,4 +1,4 @@
-<h1 align="center">image-sdk</h1>
+<h1 align="center">Image-SDK</h1>
 
 <p align="center">
   <img src="./banner.png" alt="Image SDK Banner" width="100%" />
