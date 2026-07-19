@@ -10,3 +10,9 @@ coverage/
 *.tgz
 image-sdk-out.png
 *.local
+.npmrc
+.release-*.ps1
+.release-*.bat
+*-log.txt
+*.log
+
