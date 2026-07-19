@@ -1,5 +1,9 @@
 <h1 align="center">image-sdk</h1>
 
+<p align="center">
+  <img src="./banner.png" alt="Image SDK Banner" width="100%" />
+</p>
+
 <p align="center"><strong>The unified TypeScript client for AI image generation.</strong></p>
 
 <p align="center">
