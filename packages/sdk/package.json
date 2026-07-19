@@ -1,5 +1,5 @@
 {
-  "name": "image-sdk",
+  "name": "@image-sdk/sdk",
   "version": "0.1.0",
   "description": "A lightweight TypeScript SDK for image generation",
   "main": "./dist/index.js",

@@ -23,7 +23,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "image-sdk": "workspace:*"
+    "@image-sdk/sdk": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

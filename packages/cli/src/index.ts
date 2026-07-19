@@ -2,7 +2,7 @@
 
 import { writeFile as writeFileToDisk } from "node:fs/promises";
 import { resolve } from "node:path";
-import { generateImage as generateImageWithSdk, type ImageResult, type SimpleImageOptions } from "image-sdk";
+import { generateImage as generateImageWithSdk, type ImageResult, type SimpleImageOptions } from "@image-sdk/sdk";
 
 export const POLLINATIONS_IMAGE_ENDPOINT = "https://image.pollinations.ai/p/";
 
