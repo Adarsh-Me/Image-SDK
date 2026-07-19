@@ -23,7 +23,6 @@
     "@image-sdk/core": "workspace:*"
   },
   "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
+    "access": "public"
   }
 }

@@ -10,9 +10,12 @@
     "build": "node scripts/build.mjs",
     "test": "node scripts/build.mjs && vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "clean": "node scripts/clean.mjs"
+    "clean": "node scripts/clean.mjs",
+    "changeset": "changeset",
+    "release": "pnpm build && pnpm test && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/node": "^22.15.3",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3",
